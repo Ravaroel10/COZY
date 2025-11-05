@@ -24,158 +24,13 @@ function getKnownValue(n: number): { name: string; approximateValue: number } | 
   return knownValues[n] || null
 }
 
-// Calculate zeta function using series approximation
-function calculateZeta(
-  n: number,
-  terms = 1000,
-): { value: number; convergenceData: Array<{ term: number; partialSum: number }> } {
-  let sum = 0
-  const convergenceData = []
 
-  for (let k = 1; k <= terms; k++) {
-    const term = 1 / Math.pow(k, n)
-    sum += term
-
-    // Store convergence data for visualization (every 10th term to reduce data points)
-    if (k % 10 === 0 || k <= 50) {
-      convergenceData.push({ term: k, partialSum: sum })
-    }
-  }
-
-  return { value: sum, convergenceData }
-}
-
-// Calculate zeta using the special formula from the images
-function calculateZetaSpecialFormula(n: number): {
+export default function ZetaCalculator() {
+  const [specialResult, setSpecialResult] = useState<{
   symbolicResult: string
   numericValue: number
   components: Array<{ name: string; value: number; symbolic: string }>
-} {
-  if (n === 3) {
-    // Special formula for ζ(3)
-    const pi = Math.PI
-    const lnPi = Math.log(pi)
-
-    let summation = 0
-    const summationTerms = []
-
-    for (let k = 1; k <= 10; k++) {
-      const zeta2k = calculateZeta(2 * k, 1000).value
-      const term = zeta2k / (k * (k + 1) * Math.pow(2, 2 * k))
-      summation += term
-      summationTerms.push({
-        k,
-        zeta2k,
-        term,
-        symbolic: `ζ(${2 * k})/(${k}×${k + 1}×2^${2 * k})`,
-      })
-    }
-
-    const firstPart = (2 * pi * pi) / 7
-    const secondPart = lnPi - 0.5
-    const result = firstPart * (secondPart - summation)
-
-    return {
-      symbolicResult: String.raw`\zeta(3)=\frac{2\pi^2}{7} \left(\ln \pi - \tfrac{1}{2} - \sum_{k=1}^{\infty} \frac{\zeta(2k)}{k(k+1)2^{2k}}\right)`,
-      numericValue: result,
-      components: [
-        { name: "2π²/7", value: firstPart, symbolic: "2π²/7" },
-        { name: "ln π", value: lnPi, symbolic: "ln π" },
-        { name: "1/2", value: 0.5, symbolic: "1/2" },
-        { name: "Summation (first 10 terms)", value: summation, symbolic: "Σ ζ(2k)/(k(k+1)2^(2k))" },
-      ],
-    }
-  } else if (n === 5) {
-    // Special formula for ζ(5)
-    const pi = Math.PI
-    const lnPi = Math.log(pi)
-
-    let summation = 0
-    for (let k = 1; k <= 10; k++) {
-      const zeta2k = calculateZeta(2 * k, 1000).value
-      const term = zeta2k / (k * (k + 2) * Math.pow(2, 2 * k))
-      summation += term
-    }
-
-    const firstPart = -1 / 12
-    const term1 = pi ** 2 * calculateZeta(3, 1000).value
-    const term2 = (pi ** 4 / 15) * lnPi
-    const term3 = pi ** 4 / 30
-    const term4 = pi ** 4 * summation
-    const result = firstPart * (term1 - term2 + term3 - term4)
-
-    return {
-      symbolicResult: String.raw`\zeta(5)=-\tfrac{1}{12}\left(\pi^2\zeta(3)-\tfrac{\pi^4}{15}\ln \pi+\tfrac{\pi^4}{30}-\pi^4\sum_{k=1}^{\infty}\tfrac{\zeta(2k)}{k(k+2)2^{2k}}\right)`,
-      numericValue: result,
-      components: [
-        { name: "π²ζ(3)", value: term1, symbolic: "π²ζ(3)" },
-        { name: "(π⁴/15)lnπ", value: term2, symbolic: "(π⁴/15)lnπ" },
-        { name: "π⁴/30", value: term3, symbolic: "π⁴/30" },
-        { name: "π⁴ Σ...", value: term4, symbolic: "π⁴Σ ζ(2k)/(k(k+2)2^(2k))" },
-      ],
-    }
-  } else if (n === 7) {
-    // Special formula for ζ(7)
-    const pi = Math.PI
-    const lnPi = Math.log(pi)
-
-    let summation = 0
-    for (let k = 1; k <= 10; k++) {
-      const zeta2k = calculateZeta(2 * k, 1000).value
-      const term = zeta2k / (k * (k + 3) * Math.pow(2, 2 * k))
-      summation += term
-    }
-
-    const firstPart = 1 / 120
-    const term1 = pi ** 2 * calculateZeta(5, 1000).value
-    const term2 = (2 * pi ** 6 / 945) * lnPi
-    const term3 = pi ** 6 / 1890
-    const term4 = pi ** 6 * summation
-    const result = firstPart * (term1 - term2 + term3 - term4)
-
-    return {
-      symbolicResult: String.raw`\zeta(7)=\tfrac{1}{120}\left(\pi^2\zeta(5)-\tfrac{2\pi^6}{945}\ln \pi+\tfrac{\pi^6}{1890}-\pi^6\sum_{k=1}^{\infty}\tfrac{\zeta(2k)}{k(k+3)2^{2k}}\right)`,
-      numericValue: result,
-      components: [
-        { name: "π²ζ(5)", value: term1, symbolic: "π²ζ(5)" },
-        { name: "(2π⁶/945)lnπ", value: term2, symbolic: "(2π⁶/945)lnπ" },
-        { name: "π⁶/1890", value: term3, symbolic: "π⁶/1890" },
-        { name: "π⁶ Σ...", value: term4, symbolic: "π⁶Σ ζ(2k)/(k(k+3)2^(2k))" },
-      ],
-    }
-  }
-  const l = (n - 1) / 2
-
-    // factorial (2l)!
-    const factorial2l = Array.from({ length: 2 * l }, (_, i) => i + 1).reduce(
-      (a, b) => a * b,
-      1
-    )
-
-    // 2^(2l+1) - 1
-    const power2 = Math.pow(2, 2 * l + 1) - 1
-
-    // nilai numerik (pakai series approx)
-    const value = calculateZeta(n, 2000).value
-
-    return {
-      symbolicResult: String.raw`\zeta(${n}) \ \text{(general odd zeta formula)}`,
-      numericValue: value,
-      components: [
-        { name: "(2l)!", value: factorial2l, symbolic: "(2l)!" },
-        { name: "2^(2l+1)-1", value: power2, symbolic: "2^(2l+1)-1" },
-      ],
-    }
-    // fallback terakhir
-    return {
-      symbolicResult: String.raw`\zeta(${n}) \ \text{(series expansion)}`,
-      numericValue: calculateZeta(n, 2000).value,
-      components: [],
-    }
-  }
-
-
-export default function ZetaCalculator() {
+} | null>(null)
   const [input, setInput] = useState("")
   const [result, setResult] = useState<{
     n: number
@@ -192,38 +47,60 @@ export default function ZetaCalculator() {
     }
   }
 
-  const handleCalculate = async () => {
-    const n = Number.parseInt(input)
-
-    // Validation
-    if (isNaN(n) || n < 3 || n % 2 === 0) {
-      setError("Please enter an odd integer ≥ 3")
+const handleCalculate = async () => {
+  const n = Number.parseInt(input);  // ✅ bikin n dari input
+    // ✅ Validasi nilai n
+    if (isNaN(n)) {
+      setError("Please enter a valid number.")
       return
     }
-
-    if (n > 51) {
-      setError("Please enter a value ≤ 51 for reasonable computation time")
+    if (n < 3 || n > 53) {
+      setError("Input must be between 3 and 53.")
+      return
+    }
+    if (n % 2 === 0) {
+      setError("Only odd integers are allowed.")
       return
     }
 
     setError("")
-    setIsCalculating(true)
+    setIsCalculating(true)           // ✅ bukan setLoading
 
-    // Simulate calculation delay for better UX
-    await new Promise((resolve) => setTimeout(resolve, 800))
+  try {
+    const response = await fetch(`https://backendzether-production.up.railway.app/calculate?n=${n}`);
+    const data = await response.json();
 
-    const calculation = calculateZeta(n, 2000)
-    setResult({
-      n,
-      value: calculation.value,
-      convergenceData: calculation.convergenceData,
-    })
+const formattedData = Array.isArray(data.convergence_data)
+  ? data.convergence_data.map((d: any) =>
+      Array.isArray(d) ? { term: d[0], partialSum: d[1] } : d
+    )
+  : [];
 
-    setIsCalculating(false)
-    setIsConvergenceOpen(true)
+setResult({
+  n: n,
+  value: Number(data.series_value),
+  convergenceData: formattedData
+});
+
+
+    setSpecialResult({
+      symbolicResult: data.recursion,
+      numericValue: Number(data.series_value),
+      components: [] // sementara kosong karena backend belum kirim components
+    });
+
+  } catch (error) {
+    console.error(error);
+    setError("Failed to fetch from backend");
+  } finally {
+    setIsCalculating(false);
   }
+};
 
-  const knownValue = result ? getKnownValue(result.n) : null
+
+
+const knownValue = result ? getKnownValue(result.n) : null;
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 p-4">
@@ -232,7 +109,7 @@ export default function ZetaCalculator() {
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-3 mb-6">
             <Calculator className="w-8 h-8 text-gray-700" />
-            <h1 className="text-4xl font-bold text-gray-900">Euler Zeta Calculator</h1>
+            <h1 className="text-4xl font-bold text-gray-900">COZY</h1>
           </div>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
             Compute odd values of the Riemann zeta function ζ(n) and visualize series convergence
@@ -254,7 +131,9 @@ export default function ZetaCalculator() {
               <div className="flex-1">
                 <Input
                   type="number"
-                  placeholder="Enter odd integer (e.g., 3, 5, 7...)"
+                  min={3}  // ✅ batas bawah
+                  max={53} // ✅ batas atas
+                  placeholder="Enter odd integer (3 ≤ n ≤ 53)"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
@@ -294,7 +173,7 @@ export default function ZetaCalculator() {
               <CardContent className="space-y-6">
                 {/* Main Result */}
                 <div className="bg-gray-50 rounded-lg p-6 text-center border border-gray-200">
-                  <div className="text-3xl font-bold text-gray-900 mb-2">{result.value.toFixed(7)}</div>
+                  <div className="text-3xl font-bold text-gray-900 mb-2">{result.value.toFixed(45)}</div>
                   {knownValue && (
                     <div className="text-gray-600">
                       Known as: <span className="text-gray-800 font-semibold">{knownValue.name}</span>
@@ -378,47 +257,74 @@ export default function ZetaCalculator() {
             {/* Method 2: Special Formula */}
             <Card className="bg-white border-gray-200 shadow-lg">
               <CardHeader>
-                <CardTitle className="text-gray-900 text-2xl">Method 2: Special Mathematical Formula</CardTitle>
+                <CardTitle className="text-gray-900 text-2xl">Method 2: Analytical Reconstruction of ζ(2n+1) from ζ(2n)</CardTitle>
                 <CardDescription className="text-gray-600">
-                  Using advanced mathematical identities and series representations
+                  Using an even–to–odd zeta mapping based on Euler–Bernoulli relations
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {(() => {
-                  const specialResult = calculateZetaSpecialFormula(result.n)
-                  return (
-                    <>
-                    {/* Symbolic Result */}
-                    <div className="bg-gray-900 text-white rounded-lg p-6 text-center border border-gray-300">
-                      <div className="text-lg font-mono mb-2">ζ({result.n}) =</div>
-                      <BlockMath math={specialResult.symbolicResult} />
-                    </div>
+{specialResult && typeof specialResult === "object" && (
+  <>
+{/* Cek symbolicResult */}
+{specialResult.symbolicResult && (
+  <div className="bg-gray-900 text-white rounded-lg p-6 border border-gray-700 relative">
+
+    <div className="text-lg font-mono mb-4 text-center">
+      ζ({result.n}) =
+    </div>
+
+    {/* ✅ Scrollable container with hidden scrollbar and fade edges */}
+    <div className="relative w-full overflow-x-auto scrollbar-hide">
+
+      {/* Left fade */}
+      <div className="pointer-events-none absolute left-0 top-0 h-full w-10 bg-gradient-to-r from-gray-900 to-transparent"></div>
+      {/* Right fade */}
+      <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-gray-900 to-transparent"></div>
+
+      <div className="min-w-max px-6">
+        <BlockMath math={specialResult.symbolicResult} />
+      </div>
+    </div>
+  </div>
+)}
 
 
-                      {/* Numeric Result */}
-                      <div className="bg-gray-50 rounded-lg p-6 text-center border border-gray-200">
-                        <div className="text-3xl font-bold text-gray-900 mb-2">
-                          {specialResult.numericValue.toFixed(7)}
-                        </div>
-                        <div className="text-gray-600 text-sm">Computed using special mathematical identities</div>
-                      </div>
+    {/* Cek numericValue */}
+    {Number.isFinite(specialResult.numericValue) && (
+      <div className="bg-gray-50 rounded-lg p-6 text-center border border-gray-200">
+        <div className="text-3xl font-bold text-gray-900 mb-2">
+          {specialResult.numericValue.toFixed(45)}
+        </div>
+        <div className="text-gray-600 text-sm">Computed using backend FastAPI</div>
+      </div>
+    )}
 
-                      {/* Components Breakdown */}
-                      <div className="space-y-4">
-                        <h3 className="text-xl font-semibold text-gray-900">Formula Components</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {specialResult.components.map((component, index) => (
-                            <div key={index} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                              <div className="text-sm text-gray-600 mb-1">{component.name}</div>
-                              <div className="font-mono text-lg text-gray-800 mb-1">{component.symbolic}</div>
-                              <div className="text-sm text-gray-600">≈ {component.value.toFixed(6)}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )
-                })()}
+    {/* Cek components */}
+    {Array.isArray(specialResult.components) && (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {specialResult.components.map((component, index) => (
+            <div key={index} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+              <div className="text-sm text-gray-600 mb-1">{component.name}</div>
+              <div className="font-mono text-lg text-gray-800 mb-1">
+                {component.symbolic}
+              </div>
+              <div className="text-sm text-gray-600">
+                ≈{" "}
+                {Number.isFinite(component.value)
+                  ? component.value.toFixed(45)
+                  : "Invalid"}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </>
+)}
+
+
+
               </CardContent>
             </Card>
           </div>
@@ -455,29 +361,35 @@ export default function ZetaCalculator() {
                       className="h-full"
                     >
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={result.convergenceData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                          <XAxis dataKey="term" stroke="#6b7280" fontSize={12} />
-                          <YAxis stroke="#6b7280" fontSize={12} domain={["dataMin - 0.01", "dataMax + 0.01"]} />
-                          <ChartTooltip
-                            content={<ChartTooltipContent />}
-                            contentStyle={{
-                              backgroundColor: "#ffffff",
-                              border: "1px solid #d1d5db",
-                              borderRadius: "8px",
-                              color: "#111827",
-                            }}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="partialSum"
-                            stroke="#374151"
-                            strokeWidth={2}
-                            dot={false}
-                            name={`Partial Sum → ζ(${result.n})`}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
+  <LineChart
+    data={result.convergenceData}
+    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+  >
+    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+    <XAxis
+      dataKey="term"
+      fontSize={12}
+      tickLine={false}
+      axisLine={false}
+    />
+    <YAxis
+      fontSize={12}
+      tickLine={false}
+      axisLine={false}
+      domain={["dataMin - 0.01", "dataMax + 0.01"]}
+    />
+    <ChartTooltip content={<ChartTooltipContent />} />
+
+    <Line
+      type="monotone"
+      dataKey="partialSum"
+      stroke="#374151"
+      strokeWidth={2}
+      dot={false}
+      isAnimationActive={true}
+    />
+  </LineChart>
+</ResponsiveContainer>
                     </ChartContainer>
                   </div>
                   <div className="mt-4 text-sm text-gray-600 text-center">
